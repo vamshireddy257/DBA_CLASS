@@ -1,0 +1,41 @@
+yum install -y oracle-database-preinstall-19c
+
+passwd oracle
+mkdir -p /u01/app/oracle/product/19.0.0.0/dbhome_1
+chmod -R 755 /u01
+chown -R oracle:oinstall /u01
+chmod -R 755 /database
+chown -R oracle:oinstall /database
+
+xhost +
+su - oracle
+export DISPLAY=:0
+
+connect to winscp and copy the file
+unzip LINUX.X64_193000_db_home.zip -d /u01/app/oracle/product/19.0.0.0/dbhome_1/
+cd /u01/app/oracle/product/19.0.0.0/dbhome_1/
+./runInstaller
+IN GUI:
+1)Select configuration option : setup software only
+2)Select database installation option : single installation database
+3)Select database edition : enterprise edition
+4)Specify installation location : /u01/app/oracle
+5)Create inventory : /u01/app/oraInventory
+6)privilaged operating system groups : select oinstall for all fields
+7)root script execution : Dont change anything.
+8)prereq check : next
+9)Summary : Install
+execute below from root user when prompted.
+/u01/app/oraInventory/orainstRoot.sh
+/u01/app/oracle/product/19.0.0.0/dbhome_1/root.sh
+then click ok on the popup
+Creating database go to bin directory inside your oracle home directory.
+cd /u01/app/oracle/product/19.0.0.0/dbhome_1/bin
+./dbca
+export ORACLE_HOME=/u01/app/oracle/product/19.0.0.0/dbhome_1
+export ORACLE_SID=hdfcp
+cd /u01/app/oracle/product/19.0.0.0/dbhome_1/bin
+./sqlplus / as sysdba
+select open_mode,name from v$database;
+select status , instance_name from v$instance;
+shut immediate;
