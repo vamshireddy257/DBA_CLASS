@@ -1,0 +1,25 @@
+#know the isntances which are up and running.
+ps-ef|grep smon
+
+
+#know all the instances in the server.
+cat /etc/oratab
+
+export ORACLE_HOME=/u01/app/oracle/product/19.0.0.0/dbhome_1
+export ORACLE_SID=proddb
+cd $ORACLE_HOME
+cd bin
+pwd
+
+./sqlplus / as sysdba
+
+set lines 150 
+col name for a20;
+col value for a60;
+select name,value from v$diag_info where name = 'Diag Trace';
+
+new terminal(make sure this is always first)
+cd /u01/app/oracle/diag/rdbms/proddb/proddb/trace
+ls -lrt alert*
+tail -f alert_proddb.log
+
