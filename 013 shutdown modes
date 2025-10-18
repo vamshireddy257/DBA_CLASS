@@ -1,0 +1,77 @@
+#####  open a new termina and tail alert log file. #######
+cd /u01/app/oracle/diag/rdbms/proddb/proddb/trace/
+ls -lrt alert_proddb.log
+tail -f alert_proddb.log
+
+###############################
+create user SCOTT:
+connect to sys user and execute below script:
+https://github.com/vamshireddy257/OracleDBA/blob/main/create_scott
+
+verify if scott user is create?
+select username from dba_users where username = 'SCOTT';
+###############################
+
+###############################
+shut down normal:START
+###############################
+connect to scott from 2 sessions:
+from one of those initiate DML:
+
+now issue command
+shutdown normal;
+
+and observe that instance is not closed when those two sessions are still connected to the instance. 
+###############################
+shut down normal: END
+###############################
+
+###############################
+shut down transactional:START
+###############################
+connect to scott from 2 sessions:
+from one of those initiate DML:
+
+now issue command
+shutdown transactional;
+and observe that instance is not closed till all the transactions are completed. 
+###############################
+shut down transactional:END
+###############################
+
+
+###############################
+shut down immediate :START
+###############################
+connect to scott from 2 sessions:
+from one of those initiate DML:
+
+now issue command
+shutdown immediate;
+and observe that instance is closed immediatly and all the sessions are terminated.
+And there is a checkpoint which writes pending commited data from database buffer cache to respective datafiles.
+And then the instance is closed gracefully. 
+select current_scn,checkpoint_change# from v$database;
+
+###############################
+shut down immediate :end
+###############################
+
+
+###############################
+shut down abort :START
+###############################
+connect to scott from 2 sessions:
+from one of those initiate DML and commit:
+from other initiate DML and leave it:
+
+
+now issue command
+shutdown obort;
+and observe that instance is closed immediatly and all the sessions are terminated.
+And there is a NO NO NO checkpoint which writes pending commited data from database buffer cache to respective datafiles.
+And then the instance is terminated. 
+
+###############################
+shut down abort :end
+###############################
