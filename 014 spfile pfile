@@ -10,7 +10,6 @@ check the parameter
 show parameter parameter name;
 show parameter open_cursors;
 CREATE PFILE FROM SPFILE;
-CREATE PFILE FROM SPFILE;
 
 ALTER SYSTEM SET OPEN_CURSORS=500 SCOPE=SPFILE; 
 shut immediate;
@@ -22,7 +21,7 @@ shut immediate;
 startup;
 show parameter OPEN_CURSORS;
 
-ALTER SYSTEM SET OPEN_CURSORS=700 SCOPE=both; 
+ALTER SYSTEM SET OPEN_CURSORS=800 SCOPE=both; 
 shut immediate;
 startup;
 show parameter OPEN_CURSORS;
