@@ -1,4 +1,4 @@
-#####  open a new termina and tail alert log file. #######
+#####  open a new terminal and tail alert log file. #######
 cd /u01/app/oracle/diag/rdbms/proddb/proddb/trace/
 ls -lrt alert_proddb.log
 tail -f alert_proddb.log
