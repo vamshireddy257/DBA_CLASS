@@ -34,11 +34,6 @@ select name, value from v$parameter where name = 'control_files';
 
 CREATE SPFILE FROM PFILE='Location of the PFILE';
 
-
-SQL> startup nomount pfile='/u01/app/oracle/product/12.1.0/dbhome_1/dbs/inittdps.ora';
-
-CREATE SPFILE='/u01/oracle/dbs/spfile.ora' FROM PFILE='/u01/oracle/dbs/init.ora';
-
 check if parameter is modifiable:
 col name for a30;
 SELECT  name,issys_modifiable m_INSTANCE, isses_modifiable m_SESSION  FROM V$parameter WHERE name = 'shared_pool_size';
@@ -56,3 +51,7 @@ NOTE: you cannot use scope = memory or scope = both for the static parameters(w.
 
 you should use scope = spfile 
 And that parameter,  to reflect you should restart/bounce instance.
+
+
+ create pfile='/u01/pfile_proddb.ora' from spfile;
+ startup  pfile='/u01/app/oracle/product/19.0.0.0/dbhome_1/dbs/initproddb.ora';
