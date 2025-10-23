@@ -1,0 +1,11 @@
+startup nomount;
+alter database mount;
+alter database open;
+
+shut immediate;
+
+startup mount;
+alter database open;
+shut immediate;
+
+startup;
