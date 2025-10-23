@@ -1,3 +1,7 @@
+export ORACLE_HOME=/u01/app/oracle/product/19.0.0.0/dbhome_1
+export ORACLE_SID=proddb
+export PATH=$PATH:$ORACLE_HOME/bin
+
 REDOLOG MANAGEMENT
 
 ##SELECTING GROUP,STATUS,MEMBER,MB FROM logfiles
