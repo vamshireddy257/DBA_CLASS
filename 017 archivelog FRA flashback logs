@@ -1,11 +1,39 @@
+setting enviroment using oraenv
+
+[oracle@dbserver1 ~]$ which oraenv
+/usr/local/bin/oraenv
+[oracle@dbserver1 ~]$ cat /etc/oratab |grep proddb
+proddb:/u01/app/oracle/product/19.0.0.0/dbhome_1:N
+[oracle@dbserver1 ~]$ . oraenv
+ORACLE_SID = [oracle] ? proddb
+The Oracle base has been set to /u01/app/oracle
+[oracle@dbserver1 ~]$ 
+[oracle@dbserver1 ~]$ env |grep ORA
+ORACLE_SID=proddb
+ORACLE_BASE=/u01/app/oracle
+ORACLE_HOME=/u01/app/oracle/product/19.0.0.0/dbhome_1
+[oracle@dbserver1 ~]$ 
+
+
+#########################
+to check if ARCHIVE log is enabled.
+archive log list;
+
+from os LEVEL
+ps -ef |grep arc
+
 #ENABLE ARCHIVE LOG 
-shut immediate;
+
+shut immediate; ( shutdown gracefully)
 startup mount;
 alter database archivelog;
 alter database open;
 archive log list;
 
-#ENABLE ARCHIVE LOG 
+alter system switch logfile;
+-- observe the logs in fra.
+
+#DISABLE ARCHIVE LOG 
 shut immediate;
 startup mount;
 alter database noarchivelog;
@@ -17,7 +45,7 @@ know your archive log destination
 archive log list;
 
 value at Archive destination is the destination.
-It can be a mountpoint or asm diskgroup or USE_DB_RECOVERY_FILE_DEST
+It can be a mountpoint or asm diskgroup or it can be FRA (USE_DB_RECOVERY_FILE_DEST)
 
 if FRA is enable we will have that as USE_DB_RECOVERY_FILE_DEST.
 to find FRA location...
@@ -25,6 +53,10 @@ show parameter DB_RECOVERY_FILE_DEST
 
 ##change archive log path
 to separate your archive logs from FRA use log_archive_dest_1 parameter.
+
+show parameter log_archive_dest_1;
+
+mkdir -p /database/archivelogs
 
 alter system set log_archive_dest_1='LOCATION=/database/archivelogs' scope=both;
 
@@ -44,7 +76,7 @@ ALTER SYSTEM SET db_recovery_file_dest='' SCOPE=BOTH;
 ALTER SYSTEM SET db_recovery_file_dest_size=6000M scope=both;
 
 enable FRA:
-ALTER SYSTEM SET db_recovery_file_dest='/reco' SCOPE=BOTH;
+ALTER SYSTEM SET db_recovery_file_dest='/u01/app/oracle/fast_recovery_area' SCOPE=BOTH;
 
 
 alter system set log_archive_dest_1='' scope=both;
