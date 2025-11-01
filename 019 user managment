@@ -68,6 +68,10 @@ SELECT distinct PRIVILEGE FROM DBA_SYS_PRIVS order by 1;
 -- System privileges granted to an user ( scott)
 
 
+create user scott identified by tiger;
+grant connect , resource to scott;
+grant create synonym to scott;
+
 
 SELECT * FROM DBA_SYS_PRIVS where grantee='SCOTT';
 
@@ -81,6 +85,9 @@ grant dba to scott;
 col grantee for a20;
 col GRANTED_ROLE for a20;
 SELECT * FROM DBA_ROLE_PRIVS where grantee='SCOTT';
+
+create table sys_table (a number);
+grant all on sys_table to scott;
 
 -- Object privileges granted to an user ( SCOTT)
 col owner for a20;
@@ -99,49 +106,47 @@ SELECT * FROM DBA_COL_PRIVS WHERE GRANTEE='SCOTT';
 
 GRANT SELECT ANY TABLE TO SCOTT;
 
-GRANT INSERT, UPDATE, DELETE ON TESTUSER1.EMPTABL on SCOTT;
-GRANT ALL ON TESTUSER1.EMPTABL on SCOTT;
-
--- Grant privilege on few columns of a table
---Only INSERT,UPDATE can be granted at COLUMN level.
-
---GRANT insert (emp_id) ON TESTUSER1.EMPTABL TO SCOTT;
---GRANT UPDATE(emp_id) ON TESTUSER1.EMPTABL TO SCOTT;
 
 USER MANAGEMENT STATS
 
-create user <username> identified by password <desired password> default tablespace users  temporary tablespace temp;
+create user <username> identified by  <desired password> default tablespace users  temporary tablespace temp;
+
+create user user1 identified by user1 default tablespace users temporary tablespace temp;
 
 
 
 select dbms_metadata.get_ddl('USER', u.username) AS ddl from dba_users u where u.username = 'USER1';
 
-alter user user1 identified by values 'S:3C030687D5FB49EFF32112FA5462C3D4E97E52F50E4CCCA72E009D822998;T:FBB3287F269FC426D3490C05827070CA8D289068F62EA736A0C632A448BC1FC515D359633A4CF79FB37A2CC74072C40F0C479F70C63F588B1C24A0BF0296336B24E2FCD1CE89C590A6AFE31A25504734';
+
+alter user user1 identified by values 
+'S:D9BBE9DD72650B1E22ACB8BA935E0A00A2BFA1B5CC11A3ED958D1CBAA4F2;T:23D53FA18C2E85251301F140BCBEB9BA9332B27D02F3345F7706EEB87E46F7574CBDF98FEDA8F866A4E1209C60276505EB662252649770EB50FE287518257C2FAA3DFA35BD0AA2C5D7E86B2825E598F5';
 
 
 
 Eg:
 
-create user SCOTT identified by oracle#41234
+create user VAMSHI identified by oracle#41234
 default tablespace users
 temporary tablespace TEMP;
 
 -To create an user, which will prompt for new password upon login:
 
-create user SCOTT identified by oracle#41234
+create user ADITI identified by oracle#41234
 default tablespace users
 temporary tablespace TEMP
 account unlock 
 profile APP_PROFILE
 password expire;
 
+grant connect, resource to aditi;
+
 -- Change password of an user
 
-ALTER USER SCOTT identified by NEW_PWD;
+ALTER USER aditi identified by shiva;
 
 -- Change user profile;
 
-ALTER USER SCOTT PROFILE APP_PROFILE;
+ALTER USER aditi PROFILE APP_PROFILE;
 
 -- Unlock/lock a user
 
@@ -164,6 +169,7 @@ SCOTT                          USERS
 
 -- Change default tablespace of a user:
 
+create tablespace DATATS datafile '/database/PRODDB/datafile/data_001.dbf' size 100M ;
 ALTER USER SCOTT DEFAULT TABLESPACE DATATS;
 
 select username,DEFAULT_TABLESPACE from dba_users where username='SCOTT';
@@ -180,6 +186,8 @@ TABLESPACE_NAME                                 UTILIZIED_SPACE                 
 ------------------------------         ---------------------------        --------------------------
 USERS                                           .0625                                    1024
 
+select dbms_metadata.get_ddl('TABLE','EMP') from dual;
+
 --- Change the tablespace quota for the user to 5G
 
 ALTER USER SCOTT QUOTA 5G ON USERS;
@@ -191,26 +199,16 @@ ALTER USER SCOTT QUOTA UNLIMITED ON USERS;
 --- You can connect to another user without knowing the password, with grant connect through privilege
 --- Suppose a user TEST1 wants to connect to TEST2 user and create a table and we don’t know the password of TEST2.
 
+create user supriya identified by supriya;
+grant connect , resource to supriya;
 Conn / as sysdba
 SQL >alter user SCOTT grant connect through supriya;
 
 User altered.
 
-SQL >conn TEST1[TEST2]
-Enter password:< Give password for TEST1>
+SQL >conn supriya[scott]/supriya
 
-SQL >show user
-USER is "TEST2"
-SQL >create table emp_test as select * from emp;
 
-Table created.
-
-SQL > conn / as sysdba
-connected
-SQL > select owner from dba_tables where table_name='EMP_TEST';
-
-OWNER
-------
 TEST2
 
 
@@ -269,7 +267,7 @@ FROM (
         JOIN ALL_ROLES_FOR_USER ON ALL_ROLES_FOR_USER.GRANTED_ROLE = DBA_TAB_PRIVS.GRANTEE
     ) ALL_USER_PRIVS
     -- Adjust your filter here
-    WHERE USERNAME = 'SCOTT'
+    WHERE USERNAME = 'SUPRIYA'
 ) DISTINCT_USER_PRIVS
 GROUP BY
     PRIVILEGE,
