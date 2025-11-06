@@ -1,0 +1,35 @@
+set lines 200
+col NAME for a32
+col TIME for a32
+SELECT NAME, SCN, TIME, DATABASE_INCARNATION#,GUARANTEE_FLASHBACK_DATABASE,STORAGE_SIZE FROM V$RESTORE_POINT;
+
+step 1:
+create restore point CLEAN_DB ;
+set lines 200
+col NAME for a32
+col TIME for a32
+SELECT NAME, SCN, TIME, DATABASE_INCARNATION#,GUARANTEE_FLASHBACK_DATABASE,STORAGE_SIZE FROM V$RESTORE_POINT;
+drop restore point clean_db;
+
+set lines 200
+col NAME for a32
+col TIME for a32
+SELECT NAME, SCN, TIME, DATABASE_INCARNATION#,GUARANTEE_FLASHBACK_DATABASE,STORAGE_SIZE FROM V$RESTORE_POINT;
+
+create restore point clean_db_g guarantee flashback database;
+
+set lines 200
+col NAME for a32
+col TIME for a32
+SELECT NAME, SCN, TIME, DATABASE_INCARNATION#,GUARANTEE_FLASHBACK_DATABASE,STORAGE_SIZE FROM V$RESTORE_POINT;
+
+do few DMLS;
+truncated a table;
+create a test table;
+
+
+shut immediate;
+startup mount;
+flashback database to restore point clean_db_g;
+
+alter database open resetlogs;
