@@ -12,36 +12,46 @@ FROM   dba_tablespaces
 ORDER BY tablespace_name;
 
 
-set colsep |
-set linesize 100 pages 100 trimspool on numwidth 14 
-col name format a25
-col owner format a15 
-col "Used (GB)" format a15
-col "Free (GB)" format a15 
-col "(Used) %" format a15 
-col "Size (M)" format a15 
-SELECT d.status "Status", d.tablespace_name "Name", 
- TO_CHAR(NVL(a.bytes / 1024 / 1024 /1024, 0),'99,999,990.90') "Size (GB)", 
- TO_CHAR(NVL(a.bytes - NVL(f.bytes, 0), 0)/1024/1024 /1024,'99999999.99') "Used (GB)", 
- TO_CHAR(NVL(f.bytes / 1024 / 1024 /1024, 0),'99,999,990.90') "Free (GB)", 
- TO_CHAR(NVL((a.bytes - NVL(f.bytes, 0)) / a.bytes * 100, 0), '990.00') "(Used) %"
- FROM sys.dba_tablespaces d, 
- (select tablespace_name, sum(bytes) bytes from dba_data_files group by tablespace_name) a, 
- (select tablespace_name, sum(bytes) bytes from dba_free_space group by tablespace_name) f WHERE 
- d.tablespace_name = a.tablespace_name(+) AND d.tablespace_name = f.tablespace_name(+) AND NOT 
- (d.extent_management like 'LOCAL' AND d.contents like 'TEMPORARY') 
-UNION ALL 
-SELECT d.status 
- "Status", d.tablespace_name "Name", 
- TO_CHAR(NVL(a.bytes / 1024 / 1024 /1024, 0),'99,999,990.90') "Size (GB)", 
- TO_CHAR(NVL(t.bytes,0)/1024/1024 /1024,'99999999.99') "Used (GB)",
- TO_CHAR(NVL((a.bytes -NVL(t.bytes, 0)) / 1024 / 1024 /1024, 0),'99,999,990.90') "Free (GB)", 
- TO_CHAR(NVL(t.bytes / a.bytes * 100, 0), '990.00') "(Used) %" 
- FROM sys.dba_tablespaces d, 
- (select tablespace_name, sum(bytes) bytes from dba_temp_files group by tablespace_name) a, 
- (select tablespace_name, sum(bytes_cached) bytes from v$temp_extent_pool group by tablespace_name) t 
- WHERE d.tablespace_name = a.tablespace_name(+) AND d.tablespace_name = t.tablespace_name(+) AND 
- d.extent_management like 'LOCAL' AND d.contents like 'TEMPORARY'; 
+set pages 999
+set lines 400
+SELECT df.tablespace_name tablespace_name,
+ max(df.autoextensible) auto_ext,
+ round(df.maxbytes / (1024 * 1024), 2) max_ts_size,
+ round((df.bytes - sum(fs.bytes)) / (df.maxbytes) * 100, 2) max_ts_pct_used,
+ round(df.bytes / (1024 * 1024), 2) curr_ts_size,
+ round((df.bytes - sum(fs.bytes)) / (1024 * 1024), 2) used_ts_size,
+ round((df.bytes-sum(fs.bytes)) * 100 / df.bytes, 2) ts_pct_used,
+ nvl(round(sum(fs.bytes) * 100 / df.bytes), 2) ts_pct_free
+FROM dba_free_space fs,
+ (select tablespace_name,
+ sum(bytes) bytes,
+ sum(decode(maxbytes, 0, bytes, maxbytes)) maxbytes,
+ max(autoextensible) autoextensible
+ from dba_data_files
+ group by tablespace_name) df
+WHERE fs.tablespace_name (+) = df.tablespace_name
+GROUP BY df.tablespace_name, df.bytes, df.maxbytes
+UNION ALL
+SELECT df.tablespace_name tablespace_name,
+ max(df.autoextensible) auto_ext,
+ round(df.maxbytes / (1024 * 1024), 2) max_ts_size,
+ round((df.bytes - sum(fs.bytes)) / (df.maxbytes) * 100, 2) max_ts_pct_used,
+ round(df.bytes / (1024 * 1024), 2) curr_ts_size,
+ round((df.bytes - sum(fs.bytes)) / (1024 * 1024), 2) used_ts_size,
+ round((df.bytes-sum(fs.bytes)) * 100 / df.bytes, 2) ts_pct_used,
+ nvl(round(sum(fs.bytes) * 100 / df.bytes), 2) ts_pct_free
+FROM (select tablespace_name, bytes_used bytes
+ from V$temp_space_header
+ group by tablespace_name, bytes_free, bytes_used) fs,
+ (select tablespace_name,
+ sum(bytes) bytes,
+ sum(decode(maxbytes, 0, bytes, maxbytes)) maxbytes,
+ max(autoextensible) autoextensible
+ from dba_temp_files
+ group by tablespace_name) df
+WHERE fs.tablespace_name (+) = df.tablespace_name
+GROUP BY df.tablespace_name, df.bytes, df.maxbytes
+ORDER BY 4 DESC;
 
 
 CHECK ALL THE DATAFILE OF A TABLESPACE
@@ -59,9 +69,26 @@ FROM   dba_data_files
 --WHERE  tablespace_name = 'USERS'
 ORDER BY file_id;
 
-OMF(oaracle managed file) location:=
+CHECK ALL THE DATAFILE OF A TABLESPACE
+
+COLUMN file_name FORMAT A70;
+SELECT tablespace_name,
+		file_id,
+       file_name,
+       ROUND(bytes/1024/1024) AS size_mb,
+       ROUND(maxbytes/1024/1024) AS max_size_mb,
+       autoextensible,
+       increment_by,
+       status
+FROM   dba_temp_files
+--WHERE  tablespace_name = 'USERS'
+ORDER BY file_id;
+
+
+OMF(oracle managed file) location:=
 
 show parameter DB_CREATE_FILE_DEST
+!mkdir -p /u01/tablespace
 alter system set DB_CREATE_FILE_DEST='/u01/tablespace' scope=both;
 
 
@@ -71,34 +98,37 @@ DDL ON TABLESPACE:
 Create tablespace HRMS_TS datafile '/database/PRODDB/datafile/HRMS_001.dbf' size 5M autoextend on;
 
 
-Create tablespace HDFC_TS datafile '/database/VAMDB/datafile/HDFC_001.dbf' size 5M ;
+Create tablespace HDFC_TS datafile '/database/PRODDB/datafile/HDFC_001.dbf' size 5M ;
 
 --ignore below till ASM is completed.
 create tablespace hrms_ts datafile '+DATA' size 20M;
 
 -- Add a datafile to a tablespace
-Alter tablespace HRMS_TS add datafile '/database/VAMDB/datafile/HRMS_002.dbf'  size 5M autoextend on;
+Alter tablespace HRMS_TS add datafile '/database/PRODDB/datafile/HRMS_002.dbf'  size 5M autoextend on;
 
 -- Resize a datafile
-alter database datafile '/database/VAMDB/datafile/HRMS_001.dbf' resize 20000000M;
+alter database datafile '/database/PRODDB/datafile/HRMS_001.dbf' resize 100M;
 
 --ignore below till ASM is completed.
 alter database datafile '+DATA/ORADB/DATAFILE/users.279.1102165131' resize 150M;
 
 -- Make a datafile offline/online
 
-Alter database datafile '/database/VAMDB/datafile/HRMS_002.dbf' offline;
+Alter database datafile '/database/PRODDB/datafile/HRMS_002.dbf' offline;
 
-Alter database datafile '/database/VAMDB/datafile/HRMS_002.dbf' online;
 
 
 if required do media recovery for this datafile.
-recover datafile 8;
-recover datafile '/database/VAMDB/datafile/HRMS_002.dbf';
+recover datafile 9; or below 
+recover datafile '/database/PRODDB/datafile/HRMS_002.dbf';
+Alter database datafile '/database/PRODDB/datafile/HRMS_002.dbf' online;
+
 
 -- Drop a datafile:
 
-Alter tablespace HRMS_TS drop datafile '/database/VAMDB/datafile/HRMS_002.dbf' ;
+Alter tablespace HRMS_TS drop datafile '/database/PRODDB/datafile/HRMS_002.dbf' ;
+
+Alter tablespace HRMS_TS drop datafile '/database/PRODDB/datafile/HRMS_001.dbf' ;
 --ignore below till ASM is completed.
 Alter tablespace USERS drop datafile '+DATA/ORADB/DATAFILE/users.279.1102165131';
 
@@ -197,7 +227,9 @@ ALTER DATABASE DEFAULT TEMPORARY TABLESPACE TEMP_NEW;
 
 select property_name,property_value from database_properties where property_name like '%DEFAULT%';
 
-ALTER TABLESPACE TEMP ADD TEMPFILE '+DATAC1' SIZE 10G AUTOEXTEND ON NEXT 1G MAXSIZE 32767M;
+ALTER TABLESPACE TEMP ADD TEMPFILE '/database/PRODDB/datafile/temp_002.dbg' SIZE 10G AUTOEXTEND ON NEXT 1G MAXSIZE 32767M;
+
+ALTER TABLESPACE TEMP ADD TEMPFILE '+DATA1' SIZE 10G AUTOEXTEND ON NEXT 1G MAXSIZE 32767M;
 
 who are using old temporary tablespace ( i.e. TEMP ) and kill them.
 
@@ -268,5 +300,8 @@ set echo off;
 Set pages 999;
 set long 90000;
 spool ddl_tablespace.sql
-select dbms_metadata.get_ddl('TABLE','EMPLOYEE','SCOTT') from DUAL; 
+select dbms_metadata.get_ddl('TABLESPACE','USERS') from DUAL; 
 spool off
+
+
+CREATE TABLESPACE "USERS2" DATAFILE SIZE 5242880 AUTOEXTEND ON NEXT 1310720 MAXSIZE 32767M LOGGING ONLINE PERMANENT BLOCKSIZE 8192 EXTENT MANAGEMENT LOCAL AUTOALLOCATE DEFAULT NOCOMPRESS  SEGMENT SPACE MANAGEMENT AUTO
