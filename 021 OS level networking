@@ -1,0 +1,34 @@
+configuring an ip. (unix admin task)
+making an ip permanent.(unix admin task) 
+changing hostname (unix admin task) 
+hostnamectl set-hostname server1 (unix admin task)  
+bash (unix admin task) 
+
+server1 192.168.29.100
+server2 192.168.29.200
+
+
+taking remote session using ssh. (ORACLE DBA)
+
+adding /etc/hosts entries
+
+192.168.29.100 server1.com server1 srv1
+192.168.29.200 server2.com server2 srv2
+
+
+configuring password less connectivity. (unix admin or oracle DBA task)
+
+
+########configure ssh manually################
+cd 
+cd .ssh
+ls -lrt
+ssh-keygen 
+ls -lrt
+ssh-copy-id grid@rac2.com
+ssh rac2.com
+
+##################################
+
+
+server level copy using scp. (Oracle DBA)
