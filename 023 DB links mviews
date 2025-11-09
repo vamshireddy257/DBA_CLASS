@@ -1,0 +1,34 @@
+servername		server1				server2
+IP				192.168.29.100		192.168.29.200
+instance name	proddb				testdb
+username		icici_user			hdfc_user
+listener name	listener_proddb		listener_testdb
+
+
+#PRODDB as sys
+create user icici_user identified by icici_user;
+grant connect , resource to icici_user;
+alter user icici_user quota unlimited on users;
+grant create database link to icici_user;
+grant create materialized view to icici_user;
+grant execute on dbms_refresh to icici_user;
+
+#PRODDB as icici_user
+
+create table icici_user.accounts_i (acc_no number , acc_name varchar2(10));
+CREATE DATABASE LINK DBLINK_TO_HDFC
+CONNECT TO HDFC_USER IDENTIFIED BY hdfc_user
+USING 'to_testdb';
+
+EXEC DBMS_MVIEW.REFRESH('ACCOUNTS_H_MV', 'C'); -- 'C' for Complete refresh
+
+
+
+#TESTDB as sys
+create user hdfc_user identified by hdfc_user;
+grant connect , resource to hdfc_user;
+alter user hdfc_user quota unlimited on users;
+
+#TESTDB as hdfc_user
+ 
+create table accounts_h (acc_number number , account_name varchar2(10));
