@@ -1,0 +1,103 @@
+check your connection;
+
+select instance_name, con_id, version from v$instance;
+cdb$root con_id is 0
+
+show pdbs;
+
+col name for a30
+select dbid, con_id, name from v$pdbs;
+
+select name, con_id, db_unique_name from v$database;
+
+
+alter session set container = sbi;
+
+alter session set container = CDB$ROOT;
+
+select dbid, con_id, name from v$pdbs;
+
+col CON_NAME for a32;
+col DB_NAME for a32;
+col CON_ID for a32;
+select sys_context('USERENV','CON_NAME') CON_NAME,
+            sys_context('USERENV','CON_ID') CON_ID,
+            sys_context('USERENV','DB_NAME') DB_NAME from DUAL;
+
+			
+set linesize 120
+column pdb_name format a10
+column name format a30
+column value$ format a30
+
+select ps.db_uniq_name,
+       ps.pdb_uid,
+       p.name as pdb_name,
+       ps.name,
+       ps.value$
+from   pdb_spfile$ ps
+       join v$pdbs p on ps.pdb_uid = p.con_uid
+order by 1, 2, 3;
+
+ALTER system SET open_cursors= 500 sid='*' scope=spfile;
+
+
+alter pluggable database sbi close immediate;
+alter pluggable database sbi open;
+
+
+CREATE PLUGGABLE DATABASE icici ADMIN USER pdb_adm IDENTIFIED BY Password1;
+CREATE PLUGGABLE DATABASE hdfc ADMIN USER pdb_adm IDENTIFIED BY Password1;
+CREATE PLUGGABLE DATABASE anz ADMIN USER pdb_adm IDENTIFIED BY Password1;
+CREATE PLUGGABLE DATABASE boa ADMIN USER pdb_adm IDENTIFIED BY Password1;
+
+
+alter pluggable database all except loans open;
+alter pluggable database all except savings close;
+
+
+alter pluggable database sbi close;
+alter pluggable database sbi unplug into '/u01/app/oracle/oradata/sbi.xml';
+
+drop pluggable database sbi;
+
+create pluggable database sbi using '/u01/app/oracle/oradata/sbi.xml'
+NOCOPY
+TEMPFILE REUSE;
+
+
+
+
+
+alter pluggable database sbi save state;
+alter pluggable database PDB3 save state;
+alter pluggable database PDB4 save state;
+alter pluggable database PDB5 save state;
+alter pluggable database PDB6 save state;
+
+
+
+
+select CON_NAME ,STATE from dba_pdb_saved_states;
+
+
+drop pluggable database boa including datafiles;
+
+select username,  con_id from cdb_users ORDER BY 2;
+select name , con_id from v$tablespace order by 2;
+select TABLESPACE_NAME,con_id from cdb_tablespaces ORDER BY 2;
+
+
+select username,  con_id from cdb_users  WHERE USERNAME = 'SCOTT' ORDER BY 2;
+
+
+
+alter pluggable database sbi close;
+alter pluggable database sbi open read only;
+
+!mkdir -p /home/oracle/oradata/sbi_dup
+
+CREATE PLUGGABLE DATABASE sbi_new FROM sbi;
+
+alter session set container = icici;
+alter system set open_cursors = 100;
