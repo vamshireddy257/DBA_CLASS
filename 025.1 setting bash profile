@@ -1,0 +1,12 @@
+cd 
+ls -lrt
+ls -lrtah   
+vi .bash_profile
+
+and add the content below at the end.
+
+
+export ORACLE_HOME=/u01/app/oracle/product/19.0.0.0/dbhome_1
+export ORACLE_SID=proddb
+
+export PATH=$PATH:$ORACLE_HOME/bin
