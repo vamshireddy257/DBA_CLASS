@@ -1,0 +1,221 @@
+set lines 200
+set pages 500
+col owner for a20
+col directory_name for a20
+col directory_path for a80
+select owner, DIRECTORY_NAME,DIRECTORY_PATH from dba_directories;
+
+mkdir -p /u01/datapump
+
+alter session set container = sbi;
+
+create directory datapump_dir as '/u01/datapump';
+create directory DATAPUMP_DIR1 as '/database/datapump';
+
+====================
+Full Dtabase backup
+====================
+expdp directory=datapump_dir dumpfile=Full_SBI.dmp logfile=Full_SBI.log full=y 
+sys/oracledb@to_sbi as sysdba
+
+=========
+ESTIMATE
+=========
+expdp directory=datapump_dir  logfile=Full_SBI_DD_MM_YYYY.log full=y estimate_only=y
+sys/oracledb@to_sbi as sysdba
+
+==============
+schema backup
+==============
+expdp directory=datapump_dir dumpfile=SCOTT_SBI_DD_MM_YYYY.dmp logfile=SCOTT_SBI_DD_MM_YYYY.log schemas=SCOTT,SBI_USER
+sys/oracledb@to_sbi as sysdba
+
+=============
+table backup
+=============
+expdp directory=datapump_dir dumpfile=SBI_SCOTT_EMP_DEPT_DDMMYYYY.dmp logfile=SBI_SCOTT_EMP_DEPT_DDMMYYYY.log tables=SCOTT.EMP,SCOTT.DEPT
+
+sys/oracledb@to_sbi as sysdba
+
+
+==============
+using parfile:
+==============
+[oracle@srv1 datapump]$ cat scott_tables.par 
+userid="sys/oracledb@to_sbi as sysdba" directory=datapump_dir dumpfile=SBI_SCOTT_EMP_DEPT_DDMMYYYY.dmp logfile=SBI_SCOTT_EMP_DEPT_DDMMYYYY.log tables=SCOTT.EMP,SCOTT.DEPT
+
+[oracle@srv1 datapump]$ expdp parfile=scott_tables.par
+
+==============
+VERSION
+==============
+expdp directory=datapump_dir dumpfile=SCOTT_SBI_DD_MM_YYYY.dmp logfile=SCOTT_SBI_DD_MM_YYYY.log schemas=SCOTT version=12.2.0.1.0
+sys/oracledb@to_sbi as sysdba
+
+==============
+parallel
+==============
+expdp directory=datapump_dir dumpfile=Full_SBI_%U.dmp logfile=Full_SBI.log full=y parallel=4
+sys/oracledb@to_sbi as sysdba
+
+============
+COMPRESSION
+============
+expdp directory=datapump_dir dumpfile=Full_SBI_COMPRESSED%U.dmp logfile=Full_SBI_COMPRESSED.log full=y COMPRESSION=ALL
+sys/oracledb@to_sbi as sysdba
+
+expdp directory=datapump_dir dumpfile=Full_SBI_NON_COMPRESSED%U.dmp logfile=Full_SBI_NON_COMPRESSED.log full=y
+sys/oracledb@to_sbi as sysdba
+
+ 
+============
+filesize
+============
+expdp directory=datapump_dir dumpfile=Full_SBI_%U.dmp logfile=Full_SBI_.log full=y filesize=1M
+sys/oracledb@to_sbi as sysdba
+
+==========================
+METADATA_ONLY (WITHOUT DATA)
+==========================
+expdp directory=datapump_dir dumpfile=Full_SBI_MD%U.dmp logfile=Full_SBI_MD.log schemas=SCOTT content=metadata_only
+sys/oracledb@to_sbi as sysdba
+
+==========================
+QUERY,DATA,WHERE,CONDITION
+==========================
+expdp directory=datapump_dir dumpfile=Full_SBI_EMP_DEPT_10_QUERY%U.dmp logfile=Full_SBI_EMP_DEPT_10_QUERY.log tables=SCOTT.EMP  QUERY=SCOTT.EMP:\"WHERE DEPTNO=10\" 
+sys/oracledb@to_sbi as sysdba
+
+====================
+MULTIPLE DIRECTORIES
+====================
+expdp dumpfile=DATAPUMP_DIR:FULL_%U.dmp,DATAPUMP_DIR1:FULL_%U.dmp logfile=FULL_01.log  directory=DATAPUMP_DIR FULL=Y parallel=3
+sys/oracledb@to_sbi as sysdba
+
+=============
+FLASHBACK_SCN
+=============
+enable FLASHBACK:
+
+select timestamp_to_scn(to_timestamp('05-09-2018 12:46:21','dd-mm-yyyy hh24:mi:ss')) scn from dual;
+select scn_to_timestamp(2011955) from dual;
+expdp directory=datapump_dir dumpfile=soe_emp2_271101.dmp logfile=soe_emp2_2711.log tables=soe.emp2 flashback_scn=2531067
+
+==============
+FLASHBACK_TIME
+==============
+[oracle@srv1 datapump]$ cat fb_time.par
+directory=datapump_dir dumpfile=soe_emp2_271102.dmp logfile=soe_emp2_271102.log tables=soe.emp2 flashback_time="to_timestamp('27-11-22 14:01:00','DD-MM-YY HH24:MI:SS')"
+
+======================================
+KILL,STOP,START,EXPDP JOB
+====================================== 
+[oracle@server1 datapump]$ expdp directory=datapump_dir dumpfile=Full_SBI.dmp logfile=Full_SBI.log full=y 
+
+Export: Release 19.0.0.0.0 - Production on Sun Nov 16 15:46:45 2025
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+Username: sys/oracledb@to_sbi as sysdba
+
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Starting "SYS"."SYS_EXPORT_FULL_01":  sys/********@to_sbi AS SYSDBA directory=datapump_dir dumpfile=Full_SBI.dmp logfile=Full_SBI.log full=y 
+Processing object type DATABASE_EXPORT/EARLY_OPTIONS/VIEWS_AS_TABLES/TABLE_DATA
+Processing object type DATABASE_EXPORT/NORMAL_OPTIONS/TABLE_DATA
+Processing object type DATABASE_EXPORT/NORMAL_OPTIONS/VIEWS_AS_TABLES/TABLE_DATA
+Processing object type DATABASE_EXPORT/SCHEMA/TABLE/TABLE_DATA
+Processing object type DATABASE_EXPORT/SCHEMA/TABLE/INDEX/STATISTICS/INDEX_STATISTICS
+Processing object type DATABASE_EXPORT/SCHEMA/TABLE/STATISTICS/TABLE_STATISTICS
+Processing object type DATABASE_EXPORT/STATISTICS/MARKER
+Processing object type DATABASE_EXPORT/PRE_SYSTEM_IMPCALLOUT/MARKER
+Processing object type DATABASE_EXPORT/PRE_INSTANCE_IMPCALLOUT/MARKER
+Processing object type DATABASE_EXPORT/TABLESPACE
+Processing object type DATABASE_EXPORT/PROFILE
+Processing object type DATABASE_EXPORT/SCHEMA/USER
+Processing object type DATABASE_EXPORT/RADM_FPTM
+Processing object type DATABASE_EXPORT/GRANT/SYSTEM_GRANT/PROC_SYSTEM_GRANT
+Processing object type DATABASE_EXPORT/SCHEMA/GRANT/SYSTEM_GRANT
+Processing object type DATABASE_EXPORT/SCHEMA/ROLE_GRANT
+Processing object type DATABASE_EXPORT/SCHEMA/DEFAULT_ROLE
+Processing object type DATABASE_EXPORT/SCHEMA/ON_USER_GRANT
+Processing object type DATABASE_EXPORT/SCHEMA/TABLESPACE_QUOTA
+Processing object type DATABASE_EXPORT/RESOURCE_COST
+^C
+Export> stop
+Are you sure you wish to stop this job ([yes]/no): yes
+
+[oracle@server1 datapump]$ expdp attach=SYS_EXPORT_FULL_01
+
+Export: Release 19.0.0.0.0 - Production on Sun Nov 16 15:47:41 2025
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+Username: sys/oracledb@to_sbi as sysdba
+
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+
+Job: SYS_EXPORT_FULL_01
+  Owner: SYS                            
+  Operation: EXPORT                         
+  Creator Privs: TRUE                           
+  GUID: 43B487916CC9477DE063641DA8C0664E
+  Start Time: Sunday, 16 November, 2025 15:47:52
+  Mode: FULL                           
+  Instance: proddb
+  Max Parallelism: 1
+  Timezone: +00:00
+  Timezone version: 32
+  Endianness: LITTLE
+  NLS character set: AL32UTF8
+  NLS NCHAR character set: AL16UTF16
+  EXPORT Job Parameters:
+  Parameter Name      Parameter Value:
+     CLIENT_COMMAND        sys/********@to_sbi AS SYSDBA directory=datapump_dir dumpfile=Full_SBI.dmp logfile=Full_SBI.log full=y 
+     TRACE                 0
+  State: IDLING                         
+  Bytes Processed: 0
+  Current Parallelism: 1
+  Job Error Count: 0
+  Job heartbeat: 1
+  Dump File: /u01/datapump/Full_SBI.dmp
+    bytes written: 90,112
+  
+Worker 1 Status:
+  Instance ID: 1
+  Instance name: proddb
+  Host name: server1
+  Object start time: Sunday, 16 November, 2025 15:47:09
+  Object status at: Sunday, 16 November, 2025 15:47:15
+  Process Name: DW00
+  State: UNDEFINED                      
+
+Export> start
+
+Export> status
+
+Job: SYS_EXPORT_FULL_01
+  Operation: EXPORT                         
+  Mode: FULL                           
+  State: EXECUTING                      
+  Bytes Processed: 0
+  Current Parallelism: 1
+  Job Error Count: 0
+  Job heartbeat: 1
+  Dump File: /u01/datapump/Full_SBI.dmp
+    bytes written: 94,208
+  
+Worker 1 Status:
+  Instance ID: 1
+  Instance name: proddb
+  Host name: server1
+  Object start time: Sunday, 16 November, 2025 15:47:09
+  Object status at: Sunday, 16 November, 2025 15:48:07
+  Process Name: DW00
+  State: EXECUTING                      
+
+Export> kill
+Are you sure you wish to stop this job ([yes]/no): yes
+
+
