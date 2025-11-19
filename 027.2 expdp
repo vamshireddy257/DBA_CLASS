@@ -219,3 +219,32 @@ Export> kill
 Are you sure you wish to stop this job ([yes]/no): yes
 
 
+
+
+##################################################################################################
+START OF IMPDP
+##################################################################################################
+
+expdp directory=datapump_dir dumpfile=Full_SBI.dmp logfile=Full_SBI.log full=y 
+sys/oracledb@to_sbi as sysdba
+
+
+impdp directory=dp_dir dumpfile=Full_SBI.dmp logfile=imp_Full_SBI.log
+
+
+
+
+
+==============
+schema backup
+==============
+expdp directory=datapump_dir dumpfile=SCOTT_SBI_DD_MM_YYYY.dmp logfile=SCOTT_SBI_DD_MM_YYYY.log schemas=SCOTT
+sys/oracledb@to_sbi as sysdba
+
+impdp directory=dp_dir dumpfile=SCOTT_SBI_DD_MM_YYYY.dmp logfile=IMP_SCOTT_SBI_DD_MM_YYYY.log remap_schema=SCOTT:VAMSHI table_exists_action=replace
+
+
+expdp directory=datapump_dir dumpfile=SBI_SCOTT_EMP_DEPT_DDMMYYYY.dmp logfile=SBI_SCOTT_EMP_DEPT_DDMMYYYY.log tables=SCOTT.EMP
+
+
+impdp directory=dp_dir dumpfile=SBI_SCOTT_EMP_DEPT_DDMMYYYY.dmp logfile=impSBI_SCOTT_EMP_DEPT_DDMMYYYY.log remap_table=EMP:EMPLOYEE exclude=index,constraint table_exists_action=replace 
