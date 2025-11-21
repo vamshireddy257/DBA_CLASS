@@ -2,13 +2,10 @@ RMAN CONFIGURATION on primary DB.
 
 mkdir /u01/rman_bkp/
 rman target /
-spool log to rman.log
 show all;
-spool off;
-exit;
 
-vi rman.log
-CONFIGURE RETENTION POLICY TO REDUNDANCY 2; # default
+
+CONFIGURE RETENTION POLICY TO REDUNDANCY 3; # default
 CONFIGURE BACKUP OPTIMIZATION OFF; # default
 CONFIGURE DEFAULT DEVICE TYPE TO DISK; # default
 CONFIGURE CONTROLFILE AUTOBACKUP ON; # default
@@ -34,10 +31,14 @@ rman target /
 backup database;
 
 --
-backup database tag 17_mar_2024_01;
+backup database tag bkp_21_nov_2025_01;
+backup database tag bkp_21_nov_2025_02;
+
+
+list backup summary;
 
 --if we dont want our backup to fall in obsolete status then we have to use keep until clause.
-backup database  tag 'retain' keep until time 'sysdate+2';
+backup database  tag 'retain_for_200' keep until time 'sysdate+200';
 
 backup incremental level 0 database;
 
