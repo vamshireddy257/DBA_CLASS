@@ -1,12 +1,6 @@
+#######################
 loss of full database:
-
-select 'rm '||name from v$datafile
-union 
-select 'rm '||name from v$CONTROLFILE
-union
-select 'rm '||member from v$logfile;
-
-
+#######################
 shut abort ;
 startup nomount;
 connect RMAN
@@ -17,8 +11,9 @@ recover database;
 alter database open resetlogs;
 
 
+##########################
 loss of system datafile:
-
+##########################
 shutdown abort;
 startup mount;
 select * from v$recover_file;
@@ -27,42 +22,29 @@ recover datafile 1;
 alter database open;
 
 
-
-### controlfile
+##########################
+loss of controlfile
+##########################
 shutdown abort;
-startup nomount 
-RESTORE CONTROL FROM 'BACK UP LOACTION'
-Startup mount; 
-recover database.
+startup nomount ;
+RESTORE CONTROL FROM 'BACK UP LOACTION';
+alter database mount; 
+recover database;
 alter database open resetlogs;
 
 
-
+##########################
 SYSAUX/NON SYSTEM
-sql 'alter database <datafile number offline>';
-RMAN>restore datafile <datafile number>;
-RMAN>recover datafile <datafile number>;
-RMAN>sql 'alter database <datafile number online>';
+##########################
+sql 'alter database datafile 7 offline';
+RMAN>restore  datafile 7;
+RMAN>recover  datafile 7;
+RMAN>sql 'alter database datafile 7 online';
 
 
-
-
-
-
-
+##########################
 datafile without backup.
-
-	• Login to RMAN
-	• And offline that table space.
-	RMAN> alter tablespace <tablespace_name>  offline;
-	• Restore that table space
-	RMAN> restore tablespace <tablespace_name>
-	• Recover that table space.
-	RMAN> recover table space <table space name>
-	• And online that table space.
-	• RMAN> alter tablespace <tablespace_name>  online;
-	
-
+##########################
 #recover a datafile which is not in rman backup;
 1) Know the defination of that datafile like location of that datafile.
 select name from v$datafile where file# = 36;
@@ -81,13 +63,48 @@ if the datafile is not in rman backup
 
 3) offline the datafile;
 
-alter database datafile 'path' offline;
+alter database datafile '/database/PRODDB/datafile/cdb_users_002.dbf' offline;
 
-4) recreate datafile using alter database ;
+4.0(old version) recreate datafile using alter database ;
 alter database create datafile '<path>' as '<path> size 32G reuse;
 
+4.1(latest versions 12C)
+restore datafile '/database/PRODDB/datafile/cdb_users_002.dbf';
+
 5 ) recover the datafile , as you have the datafile in existance
-rman > recover datafile 36;
+rman > recover datafile '/database/PRODDB/datafile/cdb_users_002.dbf';
 
 6 ) online the datafile
-alter database datafile 36 online;
+alter database datafile '/database/PRODDB/datafile/cdb_users_002.dbf' online;
+
+
+
+
+
+################################################
+Useful content for above practice
+################################################
+backup database;
+alter system switch logfile;
+backup archivelog all;
+################################################
+select file_name from dba_data_files;
+################################################
+set pages 1000
+set lines 150
+select 'rm '||name from v$datafile
+union 
+select 'rm '||name from v$CONTROLFILE
+union
+select 'rm '||member from v$logfile;
+################################################
+SELECT FILE#, ERROR, ONLINE_STATUS, CHANGE#, TIME FROM V$RECOVER_FILE;
+################################################
+begin
+for i in 1..30
+loop
+execute immediate 'alter system switch logfile';
+end loop;
+end;
+/
+################################################
