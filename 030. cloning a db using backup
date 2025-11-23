@@ -83,3 +83,23 @@ target:
 edit parameter to new db name:
 
 mkdir -p /u01/app/oracle/oradata/testdb/controlfile/ /u01/app/oracle/fast_recovery_area/testdb/controlfile/ /u01/app/oracle/fast_recovery_area
+
+
+
+
+
+
+using active datbase:
+source:
+1 : create pfile .
+2 : scp pfile,pwdfile to target server.
+
+Target:
+3 : modify pfile accoring to new database name.
+4 : change the namings of pfile and pwdfile.
+5 : create required directories.
+6 : create litener and tns
+7 : startup nomount;
+8 : rman target sys/oracledb@to_proddb auxiliary sys/oracledb@to_testdb.
+9 : duplicate target database to 'testdb' from active database nofilenamecheck;
+
