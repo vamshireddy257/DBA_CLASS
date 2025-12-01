@@ -1,0 +1,34 @@
+##################
+failover:
+##################
+
+
+
+alter database recover managed standby database finish;
+alter database activate standby database;
+
+shut immediate;
+startup;
+
+set lines 300 pages 300;
+col DB_UNIQUE_NAME for a10;
+select name,db_unique_name,open_mode,DATABASE_ROLE,PROTECTION_MODE,SWITCHOVER#,SWITCHOVER_status,current_scn from v$database;
+
+reinstate lost primary:
+
+New primary : select to_char(standby_became_primary_scn) from v$database;
+
+OLD STANDBY : startup mount;
+
+flashback database;
+
+Flashback Database To Scn 3644299;
+
+Alter Database Convert To Physical Standby;
+ 
+shutdown immediate;
+startup mount;
+ 
+select name,open_mode,database_role from v$database;
+
+alter database recover managed standby database disconnect from session;
