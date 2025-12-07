@@ -1,5 +1,5 @@
 ############################################################
-Create virtual machine with 4096 Ram , 1 CPU, 120GB storage
+Create virtual machine with 4096 / 6144 Ram , 1 CPU, 120GB storage
 ############################################################
 
 ############################################################
@@ -8,18 +8,86 @@ install oel 7.9 os as per below configuration:
 mounted on			Size
 /swap 				8192
 biosboot 			2048
-/boot				2.0G
+/boot				2048
 /					25G
 /u02				46G
 /u01				40G
 
 ############################################################
-add new hard disks to the VM: 10gb each 6.
+add new hard disks to the VM: 10gb total 6 hard disks.
 ############################################################
 
 ############################################################
 power off virtual machine and add newly created disks.
 ############################################################
+
+lsblk
+
+############################################################
+--- start : formating the disks
+############################################################
+[root@dbsrv1 ~]# fdisk /dev/sdb
+Welcome to fdisk (util-linux 2.23.2).
+
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
+
+Device does not contain a recognized partition table
+Building a new DOS disklabel with disk identifier 0xabf9e75f.
+
+Command (m for help): m
+Command action
+   a   toggle a bootable flag
+   b   edit bsd disklabel
+   c   toggle the dos compatibility flag
+   d   delete a partition
+   g   create a new empty GPT partition table
+   G   create an IRIX (SGI) partition table
+   l   list known partition types
+   m   print this menu
+   n   add a new partition
+   o   create a new empty DOS partition table
+   p   print the partition table
+   q   quit without saving changes
+   s   create a new empty Sun disklabel
+   t   change a partition's system id
+   u   change display/entry units
+   v   verify the partition table
+   w   write table to disk and exit
+   x   extra functionality (experts only)
+
+Command (m for help): n
+Partition type:
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended
+Select (default p): p
+Partition number (1-4, default 1): 
+First sector (2048-41943039, default 2048): 
+Using default value 2048
+Last sector, +sectors or +size{K,M,G} (2048-41943039, default 41943039): 
+Using default value 41943039
+Partition 1 of type Linux and of size 20 GiB is set
+
+Command (m for help): 
+Command (m for help): 
+Command (m for help): 
+Command (m for help): w
+The partition table has been altered!
+
+Calling ioctl() to re-read partition table.
+Syncing disks.
+
+[root@dbsrv1 ~]# fdisk /dev/sdc  >> n  >> enter >> enter >> enter >> w 
+[root@dbsrv1 ~]# fdisk /dev/sdd  >> n  >> enter >> enter >> enter >> w 
+[root@dbsrv1 ~]# fdisk /dev/sde  >> n  >> enter >> enter >> enter >> w 
+[root@dbsrv1 ~]# fdisk /dev/sdf  >> n  >> enter >> enter >> enter >> w 
+[root@dbsrv1 ~]# fdisk /dev/sdg  >> n  >> enter >> enter >> enter >> w 
+############################################################
+--- end  : formating the disks
+############################################################
+
+
+
 
 ############################################################
 From root user:
@@ -99,7 +167,7 @@ if [ -f ~/.bashrc ]; then
 . ~/.bashrc
 fi
 ORACLE_BASE=/u02/app/oracle; export ORACLE_BASE
-ORACLE_SID=oradb; export ORACLE_SID
+ORACLE_SID=proddb; export ORACLE_SID
 ORACLE_HOME=/u02/app/oracle/product/19.0.0/dbhome_1; export ORACLE_HOME
 NLS_DATE_FORMAT="DD-MON-YYYY HH24:MI:SS"; export NLS_DATE_FORMAT
 TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
@@ -158,81 +226,18 @@ Configuring "oracleasm" to use device physical block size
 Mounting ASMlib driver filesystem: /dev/oracleasm
 
 
-lsblk
 
-############################################################
---- start : formating the disks
-############################################################
-[root@dbsrv1 ~]# fdisk /dev/sdb
-Welcome to fdisk (util-linux 2.23.2).
-
-Changes will remain in memory only, until you decide to write them.
-Be careful before using the write command.
-
-Device does not contain a recognized partition table
-Building a new DOS disklabel with disk identifier 0xabf9e75f.
-
-Command (m for help): m
-Command action
-   a   toggle a bootable flag
-   b   edit bsd disklabel
-   c   toggle the dos compatibility flag
-   d   delete a partition
-   g   create a new empty GPT partition table
-   G   create an IRIX (SGI) partition table
-   l   list known partition types
-   m   print this menu
-   n   add a new partition
-   o   create a new empty DOS partition table
-   p   print the partition table
-   q   quit without saving changes
-   s   create a new empty Sun disklabel
-   t   change a partition's system id
-   u   change display/entry units
-   v   verify the partition table
-   w   write table to disk and exit
-   x   extra functionality (experts only)
-
-Command (m for help): n
-Partition type:
-   p   primary (0 primary, 0 extended, 4 free)
-   e   extended
-Select (default p): p
-Partition number (1-4, default 1): 
-First sector (2048-41943039, default 2048): 
-Using default value 2048
-Last sector, +sectors or +size{K,M,G} (2048-41943039, default 41943039): 
-Using default value 41943039
-Partition 1 of type Linux and of size 20 GiB is set
-
-Command (m for help): 
-Command (m for help): 
-Command (m for help): 
-Command (m for help): w
-The partition table has been altered!
-
-Calling ioctl() to re-read partition table.
-Syncing disks.
-
-[root@dbsrv1 ~]# fdisk /dev/sdc  >> n  >> enter >> enter >> enter >> w 
-[root@dbsrv1 ~]# fdisk /dev/sdd  >> n  >> enter >> enter >> enter >> w 
-[root@dbsrv1 ~]# fdisk /dev/sde  >> n  >> enter >> enter >> enter >> w 
-[root@dbsrv1 ~]# fdisk /dev/sdf  >> n  >> enter >> enter >> enter >> w 
-[root@dbsrv1 ~]# fdisk /dev/sdg  >> n  >> enter >> enter >> enter >> w 
-############################################################
---- end  : formating the disks
-############################################################
 
 
 ############################################################
 label disks in oracleasm
 ############################################################
-oracleasm createdisk disk1 /dev/sdb1
-oracleasm createdisk disk2 /dev/sdc1
-oracleasm createdisk disk3 /dev/sdd1
-oracleasm createdisk disk4 /dev/sde1
-oracleasm createdisk disk5 /dev/sdf1
-oracleasm createdisk disk6 /dev/sdg1
+oracleasm createdisk asmdisk1 /dev/sdb1
+oracleasm createdisk asmdisk2 /dev/sdc1
+oracleasm createdisk asmdisk3 /dev/sdd1
+oracleasm createdisk asmdisk4 /dev/sde1
+oracleasm createdisk asmdisk5 /dev/sdf1
+oracleasm createdisk asmdisk6 /dev/sdg1
 oracleasm listdisks
 
 ############################################################
@@ -241,6 +246,7 @@ copy software to /home/grid using winscp (login with grid user)
 name of the software can be LINUX.X64_193000_grid_home.zip or V982068-01_grid.zip
 
 su - grid
+source .bash_profile
 unzip /home/grid/LINUX.X64_193000_grid_home.zip -d $ORACLE_HOME
 cd $ORACLE_HOME
 
@@ -255,12 +261,12 @@ cd $ORACLE_HOME
 
 configure oracle grid ......(oracle restart)
 
-FRA 20GB
+FRA 10GB
 redundancy external.
 
 search path /dev/oracleasm/disks/*
 
-asmca -- create data disk groupadd
+asmca -- to create diskgroups (not used in real time)
 
 INSTALL
 
@@ -283,10 +289,10 @@ header_status, state, total_mb, free_mb
 from v$asm_disk 
 order by group_number;
 
-CREATE DISKGROUP FRA EXTERNAL REDUNDANCY disk '/dev/oracleasm/disks/FRA_01' ATTRIBUTE 'compatible.asm' = '19.1';
+--CREATE DISKGROUP FRA EXTERNAL REDUNDANCY disk '/dev/oracleasm/disks/FRA_01' ATTRIBUTE 'compatible.asm' = '19.1';
 
-CREATE DISKGROUP DATA EXTERNAL REDUNDANCY disk '/dev/oracleasm/disks/DISK2' ATTRIBUTE 'compatible.asm' = '19.1';
-ALTER DISKGROUP DATA ADD disk '/dev/oracleasm/disks/DISK3' ;
+CREATE DISKGROUP DATA EXTERNAL REDUNDANCY disk '/dev/oracleasm/disks/ASMDISK2' ATTRIBUTE 'compatible.asm' = '19.1';
+ALTER DISKGROUP DATA ADD disk '/dev/oracleasm/disks/ASMDISK3' ;
 
 
 
@@ -315,24 +321,11 @@ round(((total_mb-nvl(free_mb,0))/total_mb)*100,0) percent_used
 from V$ASM_DISKGROUP_STAT;
 
 incase we got the version error:
-ALTER DISKGROUP DATA SET ATTRIBUTE 'compatible.asm' = '12.1',
+ALTER DISKGROUP DATA SET ATTRIBUTE 'compatible.asm' = '19.1',
 
 
-
-col PATH for a55
-col DG_NAME for a15
-col DG_STATE for a10
-col FAILGROUP for a20
-set lines 750 pages 9999
-
-select dg.name dg_name, dg.state dg_state, dg.type, d.disk_number dsk_no,
-d.path,d.total_mb,d.free_mb, d.mount_status, d.FAILGROUP, d.state 
-from v$asm_diskgroup dg, v$asm_disk d
-where dg.group_number=d.group_number
-order by dg_name, dsk_no;
-
+create database
 dbca
 
 
 
-crsctl start res ora.cssd -init
