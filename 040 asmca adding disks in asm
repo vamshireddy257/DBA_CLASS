@@ -1,0 +1,55 @@
+asmcmd commands
+
+su - grid
+asmcmd
+
+ls
+lsdg
+cd DATA/
+pwd
+
+iostat
+iostat -G FRA
+
+
+######################################
+Adding disks to disk group
+######################################
+
+sqlplus / as sysasm
+
+--check vailable disks.
+
+col PATH for a55;
+set lines 150;
+select path, group_number group_#, disk_number disk_#, mount_status,header_status, state, total_mb, free_mb from v$asm_disk where header_status in ('CANDIDATE' , 'FORMER' ,'PROVISIONED')order by 1 ;
+
+
+To know the all existing diskgroups information:
+--------------------------------------
+col PATH for a55
+col DG_NAME for a15
+col DG_STATE for a10
+col FAILGROUP for a20
+set lines 750 pages 9999
+
+select dg.name dg_name, dg.state dg_state, dg.type, d.disk_number dsk_no,
+d.path,d.total_mb,d.free_mb, d.mount_status, d.FAILGROUP, d.state 
+from v$asm_diskgroup dg, v$asm_disk d
+where dg.group_number=d.group_number
+order by dg_name, dsk_no;
+
+
+
+select * from v$asm_operation;
+
+ALTER DISKGROUP DATA ADD disk '/dev/oracleasm/disks/ASMDISK4' ;
+select * from v$asm_operation;
+
+ALTER DISKGROUP DATA REBALANCE POWER 4;
+
+ALTER DISKGROUP DATA ADD disk '/dev/oracleasm/disks/ASMDISK5' ;
+
+ALTER DISKGROUP FRA ADD disk '/dev/oracleasm/disks/ASMDISK6' ;
+
+ALTER DISKGROUP DATA REBALANCE POWER 1;
