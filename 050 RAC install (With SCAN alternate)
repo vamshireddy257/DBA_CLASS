@@ -288,3 +288,200 @@ export TEMP=/tmp
 export TMPDIR=/tmp
 umask 022
 
+
+########################################################
+PHASE 6: Set up password less connectivty.
+A:password less connectivty for grid
+B:password less connectivty for oracle
+########################################################
+node1:
+
+su - grid
+cd 
+cd .ssh
+ls -lrt
+ssh-keygen 
+ls -lrt
+ssh-copy-id grid@rac2.com
+ssh rac2.com
+
+
+su - oracle
+cd 
+cd .ssh
+ls -lrt
+ssh-keygen 
+ls -lrt
+ssh-copy-id oracle@rac2.com
+ssh rac2.com
+
+
+######################################################
+PHASE 7: 
+A)Create Virtual harddisks 
+B)partition hardisks
+C)create oracle asm disks.
+######################################################
+poweroff both nodes
+
+A)Create Virtual harddisks 
+add 1 disk of 10GB. -- for OCR
+add 1 disk of 15GB. -- for FRA
+add 1 disk of 30GB. -- for DATA
+
+>> vitrual media managers.
+
+oracleasm listdisks
+
+fdisk -l
+lsblk
+
+fdisk /dev/sdb
+n p enter enter enter w
+
+lsblk
+
+
+ls -ltr /dev/oracleasm/disks
+
+oracleasm createdisk DISK1 /dev/sdb1
+oracleasm createdisk DISK2 /dev/sdc1
+oracleasm createdisk DISK3 /dev/sdd1
+
+
+oracleasm listdisks
+
+
+check if this is reflected on node to 
+
+oracleasm listdisks
+oracleasm scandisks
+oracleasm listdisks
+
+
+######################################################
+PHASE 8: 
+A)copy grid software
+B)unzip software
+C)install grid software
+######################################################
+Connect to winscp and copy software.
+run below from node1
+xhost + 
+su - grid
+unzip the software to grid home
+unzip LINUX.X64_193000_grid_home.zip -d /u01/app/19.0.0/grid
+
+--cross verify if nslookup rac-scan is working
+nslookup rac-scan
+
+cd /u01/app/19.0.0/grid
+export DISPLAY=:0
+./gridSetup.sh
+
+/gridSetup.sh
+
+options
+
+Configure Oracle Grid Infrastructure for a New Cluster option.
+Configure an Oracle Standalone Cluster option by clicking the Next button.
+
+##Enter the 
+cluster name rac-cluster, 
+SCAN name rac-scan and 
+SCAN port 1521, then 
+click the Next button.
+
+
+##On the “Cluster Node Information” screen, click the Add button.
+Enter the details of the second node in the cluster, then click the OK button
+
+Check the public and private networks are specified correctly as ASM & Private. Click the Next button.
+
+public : only public
+private asm and private
+
+
+##Accept the Use Oracle Flex ASM for Storage option by clicking the Next button.
+
+Select the No option, as we don’t want to create a separate disk group for the GIMR in this case. 
+Click the Next button.
+
+change discovery path.
+
+/dev/oracleasm/disks*
+
+Set the redundancy to External, click the 1GB DISK for OCR configuration, then click the Next button.
+
+Enter the credentials and click the Next button
+same passwd gridasm.
+
+Accept the default IPMI option by clicking the Next button.
+
+Deselect EM. Click the Next button.
+
+Set the groups to oinstall and click the Next button. Accept the warnings on the subsequent dialog by clicking the Yes button.
+
+Click the Next button.
+
+Accept the default inventory directory by click the Next button
+
+Click the Next button.
+
+Check the Ignore All checkbox and click the Next button.
+
+Double check and click the Install button.
+
+######################################################
+PHASE 9: installing database software
+A)copy oracle database software
+B)unzip software
+C)install database software
+######################################################
+
+##installing oracle_home 
+xhost +
+su - oracle
+export DISPLAY=:0
+go to software location
+unzip LINUX.X64_193000_db_home.zip -d $ORACLE_HOME
+
+cd $ORACLE_HOME
+
+./runInstaller
+
+
+######################################################
+PHASE 10: creating Database
+A)creating disk groups for database
+B)run dbca
+######################################################
+su - grid
+sqlplus / as sysasm
+
+set lines 250 
+set pages 9999 
+column path format a35 
+ 
+select path, group_number group_#, disk_number disk_#, mount_status,      
+header_status, state, total_mb, free_mb 
+from v$asm_disk 
+order by group_number;
+
+CREATE DISKGROUP FRA EXTERNAL REDUNDANCY disk '/dev/oracleasm/disks/DISK2' ATTRIBUTE 'compatible.asm' = '19.1';
+CREATE DISKGROUP DATA EXTERNAL REDUNDANCY disk '/dev/oracleasm/disks/DISK3' ATTRIBUTE 'compatible.asm' = '19.1';
+
+col PATH for a55
+col DG_NAME for a15
+col DG_STATE for a10
+col FAILGROUP for a20
+set lines 750 pages 9999
+
+select dg.name dg_name, dg.state dg_state, dg.type, d.disk_number dsk_no,
+d.path,d.total_mb,d.free_mb, d.mount_status, d.FAILGROUP, d.state 
+from v$asm_diskgroup dg, v$asm_disk d
+where dg.group_number=d.group_number
+order by dg_name, dsk_no;
+
+su - oracle
+dbca 
