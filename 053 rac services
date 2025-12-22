@@ -1,0 +1,64 @@
+srvctl status database -d proddb
+srvctl status service -d proddb
+
+srvctl stop service -d proddb
+srvctl status service -d proddb
+
+srvctl add service -d proddb -s proddbsvc -preferred proddb1 -available proddb2
+
+srvctl status service -d proddb
+
+srvctl start service -d proddb
+srvctl status service -d proddb
+srvctl config service -d proddb
+
+
+proddbSVC =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = rac-scan)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = proddbsvc)
+    )
+  )
+
+sqlplus system/oracle@proddbsvc
+
+
+select host_name , instance_name from v$instance;
+srvctl status service -d proddb
+
+srvctl relocate service -d proddb -s proddbsvc -oldinst proddb2 -newinst proddb1
+
+srvctl stop service -d proddb
+srvctl remove service -d proddb -s proddbsvc
+srvctl add service -d proddb -s proddbsvc -preferred proddb1,proddb2
+
+
+TAF:
+srvctl add service -d proddb -s proddbsvc -preferred proddb1 -available proddb2
+srvctl start service -d proddb
+
+sqlplus system/oracle@proddb_svc
+
+
+srvctl add service -d proddb -s proddbsvc -preferred proddb1,proddb2
+
+srvctl modify service -d proddb -s proddbsvc -failovertype SELECT -failovermethod BASIC
+
+srvctl modify service -d proddb -s proddbsvc -failovertype SESSION -failovermethod BASIC
+
+
+
+proddbSVC =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = rac-scan)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = proddbsvc)
+      (failover_mode=(type=select)(method=basic))
+    )
+  )
+  
+  
+srvctl modify service -d proddb -s proddbsvc -preferred proddb1,proddb2
