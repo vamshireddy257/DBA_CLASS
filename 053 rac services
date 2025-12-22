@@ -13,7 +13,7 @@ srvctl status service -d proddb
 srvctl config service -d proddb
 
 
-proddbSVC =
+proddbtns =
   (DESCRIPTION =
     (ADDRESS = (PROTOCOL = TCP)(HOST = rac-scan)(PORT = 1521))
     (CONNECT_DATA =
@@ -22,7 +22,7 @@ proddbSVC =
     )
   )
 
-sqlplus system/oracle@proddbsvc
+sqlplus system/oracle@proddbtns
 
 
 select host_name , instance_name from v$instance;
@@ -39,7 +39,7 @@ TAF:
 srvctl add service -d proddb -s proddbsvc -preferred proddb1 -available proddb2
 srvctl start service -d proddb
 
-sqlplus system/oracle@proddb_svc
+sqlplus system/oracle@proddbtns
 
 
 srvctl add service -d proddb -s proddbsvc -preferred proddb1,proddb2
@@ -50,7 +50,7 @@ srvctl modify service -d proddb -s proddbsvc -failovertype SESSION -failovermeth
 
 
 
-proddbSVC =
+proddbfo =
   (DESCRIPTION =
     (ADDRESS = (PROTOCOL = TCP)(HOST = rac-scan)(PORT = 1521))
     (CONNECT_DATA =
