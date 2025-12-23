@@ -1,0 +1,114 @@
+Create new node.
+
+phase 2:
+vi /etc/hosts
+
+#private
+10.10.100.11 rac1-priv.com rac1-priv
+10.10.100.12 rac2-priv.com rac2-priv
+10.10.100.13 rac3-priv.com rac3-priv
+
+
+#public
+192.168.56.71 rac1.com rac1
+192.168.56.72 rac2.com rac2
+192.168.56.73 rac3.com rac3
+
+
+#vip
+192.168.56.81 rac1-vip.com rac1-vip
+192.168.56.82 rac2-vip.com rac2-vip
+192.168.56.83 rac3-vip.com rac3-vip
+
+
+
+
+Configure SSH for oracle and grid users on all nodes :
+connect to rac1.com
+su - grid
+ssh-copy-id grid@rac3.com
+ssh rac3.com
+ssh rac3
+
+su - oracle
+ssh-copy-id oracle@rac3.com
+ssh rac3.com
+ssh rac3
+
+connect to rac2.com
+su - grid
+ssh-copy-id grid@rac3.com
+ssh rac3.com
+ssh rac3
+
+su - oracle
+ssh-copy-id oracle@rac3.com
+ssh rac3.com
+ssh rac3
+
+connect to rac3.com
+su - grid
+ssh-keygen 
+ssh-copy-id grid@rac1.com
+ssh-copy-id grid@rac2.com
+
+ssh rac1.com
+ssh rac1
+ssh rac2.com
+ssh rac2
+
+su - oracle
+ssh-keygen 
+ssh-copy-id oracle@rac1.com
+ssh-copy-id oracle@rac2.com
+
+ssh rac1.com
+ssh rac1
+ssh rac2.com
+ssh rac2
+
+
+
+
+
+
+
+hostnamectl set-hostname rac3.com
+prepare the node.
+
+############################################
+from any of the existing node
+############################################
+xhost +
+su - grid
+export DISPLAY=:0
+cd $ORACLE_HOME
+
+./gridSetup.sh 
+add more nodes to the cluster
+provide hostname and rac-vip
+setup SSH connectivity
+run fixups in rac3.. and ignore all
+next and start installation
+run root scripts in node3
+
+2. Extend oracle database home to new node using addnode.sh — Run from existing node
+
+new terminal as root
+xhost +
+su - oracle
+export DISPLAY=:0
+
+cd $ORACLE_HOME/addnode
+./addnode.sh "CLUSTER_NEW_NODES={rac3}"
+select nodename and next
+
+3. Add the instance on node using dbca utility( run on existing node)
+cd $ORACLE_HOME/bin
+
+./dbca
+
+ORACLE RAC database instance managment
+add an instance
+
+srvctl start instance -d proddb -i proddb3
