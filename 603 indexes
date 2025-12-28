@@ -1,0 +1,22 @@
+Indexes:
+connect to sys
+
+sqlplus / as sysdba
+
+grant plustrace to soe;
+
+conn  soe/soe
+lets create a table based on orders.
+select count(*) from orders;
+
+create table orders_dup as select * from orders;
+
+set autotrace traceonly;
+select * from orders_dup where order_id = 183743;
+
+create index orders_dup_order_id on orders_dup(order_id);
+
+set autotrace traceonly;
+select * from orders_dup where order_id = 183743;
+
+drop table orders_dup purge;
