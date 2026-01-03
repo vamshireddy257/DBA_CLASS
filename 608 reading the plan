@@ -1,0 +1,53 @@
+sqlplus scott/tiger
+
+set autotrace traceonly
+
+select * from emp e join dept d 
+on e.deptno = d.deptno 
+join salgrade s 
+on e.sal >= s.losal and e.sal <= s.hisal 
+where e.empno = 7788 and d.deptno = 20;
+
+
+check the plan
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 728884239
+
+------------------------------------------------------------------------------------------
+| Id  | Operation		      | Name	 | Rows  | Bytes | Cost (%CPU)| Time	 |
+------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT	      | 	 |     3 |   204 |     5   (0)| 00:00:01 |
+|   1 |  NESTED LOOPS		      | 	 |     3 |   204 |     5   (0)| 00:00:01 |
+|   2 |   NESTED LOOPS		      | 	 |     1 |    58 |     2   (0)| 00:00:01 |
+|   3 |    TABLE ACCESS BY INDEX ROWID| DEPT	 |     1 |    20 |     1   (0)| 00:00:01 |
+|*  4 |     INDEX UNIQUE SCAN	      | PK_DEPT  |     1 |	 |     0   (0)| 00:00:01 |
+|*  5 |    TABLE ACCESS BY INDEX ROWID| EMP	 |     1 |    38 |     1   (0)| 00:00:01 |
+|*  6 |     INDEX UNIQUE SCAN	      | PK_EMP	 |     1 |	 |     0   (0)| 00:00:01 |
+|*  7 |   TABLE ACCESS FULL	      | SALGRADE |     3 |    30 |     3   (0)| 00:00:01 |
+------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   4 - access("D"."DEPTNO"=20)
+   5 - filter("E"."DEPTNO"=20)
+   6 - access("E"."EMPNO"=7788)
+   7 - filter("E"."SAL"<="S"."HISAL" AND "E"."SAL">="S"."LOSAL")
+
+
+Statistics
+----------------------------------------------------------
+	  0  recursive calls
+	  0  db block gets
+	 11  consistent gets
+	  0  physical reads
+	  0  redo size
+       1581  bytes sent via SQL*Net to client
+	512  bytes received via SQL*Net from client
+	  2  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+	  1  rows processed
+
+
