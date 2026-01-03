@@ -1,0 +1,94 @@
+select table_name,avg_row_len,round(((blocks*16/1024)),2)||'MB' "TOTAL_SIZE",
+round((num_rows*avg_row_len/1024/1024),2)||'Mb' "ACTUAL_SIZE",
+round(((blocks*16/1024)-(num_rows*avg_row_len/1024/1024)),2) ||'MB' "FRAGMENTED_SPACE",
+(round(((blocks*16/1024)-(num_rows*avg_row_len/1024/1024)),2)/round(((blocks*16/1024)),2))*100 "percentage"
+from all_tables WHERE table_name='&TABLE_NAME';
+
+EXEC dbms_stats.gather_table_stats(ownname => 'TABLE_OWNER', tabname => 'TABLE_NAME', method_opt=> 'for all indexed columns size skewonly', granularity => 'ALL', degree => 8 ,cascade => true,estimate_percent => 15);
+
+
+create table emp as select * from scott.emp;
+
+
+
+
+BEGIN
+FOR I IN 1..20
+LOOP
+INSERT INTO emp SELECT * FROM emp;
+COMMIT;
+END LOOP;
+END;
+/
+commit;
+
+
+create table emp1 as select * from emp;
+
+col table_name for a12;
+col owner for a12;
+
+
+select owner,table_name,avg_row_len,round(((blocks*16/1024)),2)||'MB' "TOTAL_SIZE",
+round((num_rows*avg_row_len/1024/1024),2)||'Mb' "ACTUAL_SIZE",
+round(((blocks*16/1024)-(num_rows*avg_row_len/1024/1024)),2) ||'MB' "FRAGMENTED_SPACE",
+(round(((blocks*16/1024)-(num_rows*avg_row_len/1024/1024)),2)/round(((blocks*16/1024)),2))*100 "percentage"
+from all_tables WHERE table_name='EMP';
+
+analyze table EMP compute statistics;
+
+
+delete from EMP where deptno =20;
+commit;
+
+analyze table EMP compute statistics;
+
+select table_name,avg_row_len,round(((blocks*16/1024)),2)||'MB' "TOTAL_SIZE",
+round((num_rows*avg_row_len/1024/1024),2)||'Mb' "ACTUAL_SIZE",
+round(((blocks*16/1024)-(num_rows*avg_row_len/1024/1024)),2) ||'MB' "FRAGMENTED_SPACE",
+(round(((blocks*16/1024)-(num_rows*avg_row_len/1024/1024)),2)/round(((blocks*16/1024)),2))*100 "percentage"
+from all_tables WHERE table_name='EMP';
+
+
+alter table EMP enable row movement;
+
+alter table EMP move ;
+
+alter table EMP move tablespace <tablespacename> ;
+
+
+analyze table EMP compute statistics;
+
+select table_name,avg_row_len,round(((blocks*16/1024)),2)||'MB' "TOTAL_SIZE",
+round((num_rows*avg_row_len/1024/1024),2)||'Mb' "ACTUAL_SIZE",
+round(((blocks*16/1024)-(num_rows*avg_row_len/1024/1024)),2) ||'MB' "FRAGMENTED_SPACE",
+(round(((blocks*16/1024)-(num_rows*avg_row_len/1024/1024)),2)/round(((blocks*16/1024)),2))*100 "percentage"
+from all_tables WHERE table_name='EMP1';
+
+
+alter table EMP1 shrink;
+alter table EMP1 shrink compact;
+alter table EMP1 shrick cascade;
+
+alter table EMP1 shrink SPACE COMPACT;
+
+expdp directory=datapump dumpfile=soe_EMP_030923.dmp logfile=soe_EMP_030923.log tables=soe.EMP 
+
+impdp  directory=datapump dumpfile=soe_EMP_030923.dmp logfile=soe_EMP_030923_imp.log table_exists_action=truncate
+
+
+
+
+for your practice:
+create table emp2 as select * from emp;
+run atleast 15 times.
+insert into emp2 as select * from emp2;
+fragmentation query ? -- no fragmentation
+delete from emp2 where deptno = 20;
+fragmentation query ? you will see fragmentation..
+alter table emp2 move;
+fragmentation query ? -- no fragmentation
+delete from emp2 where deptno = 30;
+fragmentation query ? you will see fragmentation..
+alter table tablename shrink ;
+fragmentation query ? -- no fragmentation
