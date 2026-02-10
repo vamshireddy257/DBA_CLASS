@@ -10,6 +10,7 @@ Install OEM
 RAM : 12G  12288MB
 HDD : 120G
 CPU : 2
+networ hostonly (192.168.56.10) bridged
 --------------------------------------------
 boot 2048
 biosboot 2048
@@ -24,7 +25,7 @@ add ip and alias in /etc/hosts
 
 vi /etc/hosts
 
-192.168.29.100 oem.com oem
+192.168.56.10 oem.com oem
 
 Here instead of stopping firewall on all ports lets open few ports required
 
@@ -173,14 +174,8 @@ TO_OEMDB =
     )
   )
 
-sqlplus / as sysdba
-alter pluggable database all open;
-alter pluggable database all save state;
 
 
-shut immediate;
-startup;
-show pdbs;
 
 NOW your database is ready.
 
@@ -209,6 +204,8 @@ yum install libXtst -y
 Change few parameters in database:
 
 sqlplus / as sysdba
+alter pluggable database all open;
+alter pluggable database all save state;
 
 alter system set "_allow_insert_with_update_check"=true;
 alter system set session_cached_cursors=200 scope=spfile;
@@ -270,7 +267,6 @@ review >> install
 
 ####################################################################
 
-
 This information is also available at: 
 
 	/u01/app/oracle/middleware/install/setupinfo.txt
@@ -299,13 +295,13 @@ You can find the details on ports used by this deployment at : /u01/app/oracle/m
  NOTE: This backup is valid only for the initial OMS configuration. For example, it will not reflect plug-ins installed later, topology changes like the addition of a load balancer, or changes to other properties made using emctl or emcli. Backups should be created on a regular basis to ensure they capture the current OMS configuration. Use the following command to backup the OMS configuration:
 /u01/app/oracle/middleware/bin/emctl exportconfig oms -dir <backup dir> 
 
-
 ####################################################################
 
 https://oem.com:7803/em
 
 login
-
+sysman
+oemDBA#123
 
 # to check the status of OMS
 $OMS_HOME/bin/emctl status oms
